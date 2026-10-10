@@ -249,27 +249,36 @@ function ResultCard({ values, historyId, isFavorited, onFavorite }: { values: Se
 function AuxilioPage() {
   const [tab, setTab] = useState<"aimbot" | "sensi" | "modules" | "injection">("aimbot");
   const [toggles, setToggles] = useState({ light: false, precise: false, stabilize: false, recoil: false, fine: false });
-  const [injecting, setInjecting] = useState<string | null>(null);
-  const [active, setActive] = useState<string | null>(null);
+  const [launching, setLaunching] = useState<"normal" | "max" | null>(null);
   const [logs, setLogs] = useState<string[]>(["[SISTEMA] Auxílio carregado com segurança."]);
   const [quickExit, setQuickExit] = useState(false);
+  const [optimizationSystem, setOptimizationSystem] = useState<(typeof OPERATING_SYSTEMS)[number]>("android");
+  const [optimizationDevice, setOptimizationDevice] = useState(androidDevices[0]);
+  const [optimizationPerformance, setOptimizationPerformance] = useState<(typeof PERFORMANCE_LEVELS)[number]>("high");
+  const [optimizationResult, setOptimizationResult] = useState<SensitivityValues | null>(null);
+  const optimizationDevices = optimizationSystem === "android" ? androidDevices : iosDevices;
+  const optimize = trpc.generator.generate.useMutation({ onSuccess: data => { setOptimizationResult(data.values); toast.success("Ajustes de otimização gerados e salvos no histórico"); }, onError: error => toast.error(error.message) });
+  useEffect(() => { setOptimizationDevice(optimizationDevices[0]); setOptimizationResult(null); }, [optimizationSystem]);
   const toggle = (key: keyof typeof toggles) => setToggles(value => ({ ...value, [key]: !value[key] }));
-  const inject = (mode: string) => {
-    setInjecting(mode); setActive(null); setLogs(value => [...value, `[INFO] Preparando ${mode}...`]);
-    window.setTimeout(() => { setInjecting(null); setActive(mode); setLogs(value => [...value, `[SUCESSO] ${mode} ativo e funcionando!`]); toast.success("Módulo ativado"); }, 1500);
-  };
   const openGame = (mode: "normal" | "max") => {
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const android = /android/i.test(navigator.userAgent);
     const max = mode === "max";
     const androidPackage = max ? "com.dts.freefiremax" : "com.dts.freefireth";
     const storeUrl = ios ? `https://apps.apple.com/app/${max ? "free-fire-max/id1480516829" : "free-fire/id1300146617"}` : `https://play.google.com/store/apps/details?id=${androidPackage}`;
-    const appUrl = ios ? "freefire://" : `intent://#Intent;scheme=freefire;package=${androidPackage};end`;
-    let leftPage = false;
-    const markHidden = () => { leftPage = true; };
-    document.addEventListener("visibilitychange", markHidden, { once: true });
-    window.location.href = appUrl;
-    window.setTimeout(() => { if (!leftPage && document.visibilityState === "visible") window.location.href = storeUrl; }, 1400);
-    setLogs(value => [...value, `[SISTEMA] Abrindo Free Fire ${max ? "MAX" : "Normal"}...`]);
+    const appUrl = ios ? "freefire://" : `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${androidPackage};S.browser_fallback_url=${encodeURIComponent(storeUrl)};end`;
+    setLaunching(mode);
+    setLogs(value => [...value, `[SISTEMA] Solicitando abertura de Free Fire ${max ? "MAX" : "Normal"}...`]);
+    if (android) {
+      window.location.assign(appUrl);
+      window.setTimeout(() => setLaunching(current => current === mode ? null : current), 2200);
+    } else if (ios) {
+      window.location.assign(appUrl);
+      window.setTimeout(() => { if (document.visibilityState === "visible") window.location.assign(storeUrl); setLaunching(current => current === mode ? null : current); }, 1500);
+    } else {
+      window.location.assign(storeUrl);
+      setLaunching(null);
+    }
   };
   const quickExitNow = () => {
     setQuickExit(true);
@@ -307,7 +316,16 @@ function AuxilioPage() {
         <AuxToggle label="Controle de Recuo" description="Ajuste fino do controle" icon={MoveDown} value={toggles.recoil} onClick={() => toggle("recoil")} />
         <AuxToggle label="Ajuste Fino de Precisão" description="Personalize o perfil de mira" icon={SlidersHorizontal} value={toggles.fine} onClick={() => toggle("fine")} />
       </div>}
-      {tab === "sensi" && <div className="aux-center-panel yx-performance-panel"><Gauge size={38} /><h2>Selecione seu celular</h2><p>Escolha a plataforma para continuar no gerador.</p><div className="aux-choice-row"><button onClick={() => toast.info("Dispositivo computado com sucesso!")}>iOS</button><button className="selected" onClick={() => toast.info("Dispositivo computado com sucesso!")}>Android</button></div></div>}
+      {tab === "sensi" && <section className="yx-optimization-panel">
+        <header className="yx-optimization-header"><div className="yx-optimization-mark"><Gauge size={24} /></div><div><span>PERFIL DE DISPOSITIVO</span><h3>Configure e gere seus ajustes</h3><p>Escolha o aparelho e a prioridade. Os valores serão salvos no histórico para você copiar no jogo.</p></div></header>
+        <div className="yx-optimization-grid">
+          <div className="yx-optimization-card"><span className="card-step">01</span><h4>Sistema operacional</h4><div className="yx-optimization-os">{OPERATING_SYSTEMS.map(os => <button type="button" key={os} className={optimizationSystem === os ? "selected" : ""} aria-pressed={optimizationSystem === os} onClick={() => { setOptimizationSystem(os); setOptimizationResult(null); }}>{os === "android" ? <Smartphone size={19} /> : <Apple size={19} />}{OS_LABELS[os]}</button>)}</div></div>
+          <div className="yx-optimization-card"><span className="card-step">02</span><h4>Seu aparelho</h4><DevicePicker value={optimizationDevice} options={optimizationDevices} onChange={device => { setOptimizationDevice(device); setOptimizationResult(null); }} /></div>
+          <div className="yx-optimization-card yx-optimization-profile"><span className="card-step">03</span><h4>Prioridade do perfil</h4><div className="yx-optimization-levels">{PERFORMANCE_LEVELS.map(level => <button type="button" key={level} className={optimizationPerformance === level ? "selected" : ""} aria-pressed={optimizationPerformance === level} onClick={() => { setOptimizationPerformance(level); setOptimizationResult(null); }}><b>{PERFORMANCE_LABELS[level]}</b><small>{level === "low" ? "Economia" : level === "medium" ? "Equilíbrio" : "Fluidez"}</small></button>)}</div></div>
+        </div>
+        <div className="yx-optimization-action"><span><ShieldCheck size={15} /> Gere valores para copiar e configurar manualmente no jogo.</span><button type="button" className="primary-button" onClick={() => optimize.mutate({ operatingSystem: optimizationSystem, device: optimizationDevice, performance: optimizationPerformance })} disabled={optimize.isPending}>{optimize.isPending ? <><RefreshCw size={16} className="spin" /> GERANDO...</> : <><Sparkles size={16} /> GERAR OTIMIZAÇÃO <ChevronRight size={17} /></>}</button></div>
+        {optimizationResult && <div className="yx-optimization-result"><header><div><span>RESULTADO PRONTO</span><h4>Ajustes para {optimizationDevice}</h4></div><button type="button" className="ghost-button" onClick={async () => { try { await copyToClipboard(valueLabels.map(item => `${item.label}: ${optimizationResult[item.key]}`).join("\n")); toast.success("Todos os ajustes foram copiados"); } catch { toast.error("Não foi possível copiar os ajustes"); } }}><Copy size={15} /> Copiar tudo</button></header><div className="yx-optimization-values">{valueLabels.map(item => <div className="yx-optimization-value" key={item.key}><span>{item.icon}</span><b>{item.label}</b><strong>{optimizationResult[item.key]}</strong><button type="button" aria-label={`Copiar ${item.label}`} onClick={async () => { try { await copyToClipboard(String(optimizationResult[item.key])); toast.success(`${item.label} copiado`); } catch { toast.error("Não foi possível copiar o ajuste"); } }}><Copy size={14} /></button></div>)}</div></div>}
+      </section>}
       {tab === "modules" && <div className="aux-module-grid yx-module-grid">
         <AuxModule name="Mira leve" icon={Crosshair} active={toggles.light} onClick={() => toggle("light")} />
         <AuxModule name="Mira precisa" icon={Target} active={toggles.precise} onClick={() => toggle("precise")} />
@@ -316,11 +334,42 @@ function AuxilioPage() {
         <AuxModule name="Ajuste fino" icon={SlidersHorizontal} active={toggles.fine} onClick={() => toggle("fine")} />
         <button type="button" className="aux-module" onClick={quickExitNow}><span className="termux-code-icon" aria-hidden="true"><LogOut size={22} /></span><span><b>Bypass</b><small>Saída rápida</small></span><i><ChevronRight size={15} /></i></button>
       </div>}
-      {tab === "injection" && <div className="aux-injection yx-injection"><div className="aux-action-row"><button onClick={() => { openGame("normal"); inject("FF NORMAL"); }} disabled={Boolean(injecting)}>ABRIR FF NORMAL</button><button onClick={() => { openGame("max"); inject("FF MAX"); }} disabled={Boolean(injecting)}>ABRIR FF MAX</button></div><div className={`aux-injection-state ${active ? "active" : ""}`}>{injecting ? <><RefreshCw className="spin" size={18} /> Preparando...</> : active ? <><span className="aux-green-dot" /> {active} pronto</> : "Escolha uma versão do jogo"}</div><div className="aux-console">{logs.map((log, index) => <div key={`${log}-${index}`} className={log.includes("SUCESSO") ? "success" : ""}><span>[{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}]</span> {log}</div>)}</div></div>}
+      {tab === "injection" && <div className="aux-injection yx-injection"><div className="aux-action-row"><button onClick={() => openGame("normal")} disabled={Boolean(launching)}>{launching === "normal" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF NORMAL"}</button><button onClick={() => openGame("max")} disabled={Boolean(launching)}>{launching === "max" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF MAX"}</button></div><div className={`aux-injection-state ${launching ? "active" : ""}`}>{launching ? <><RefreshCw className="spin" size={16} /> Solicitando abertura do Free Fire {launching === "max" ? "MAX" : "Normal"}...</> : "Escolha uma versão para abrir. Se não estiver instalada, será aberta a loja."}</div><div className="aux-console">{logs.map((log, index) => <div key={`${log}-${index}`} className={log.includes("SUCESSO") ? "success" : ""}><span>[{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}]</span> {log}</div>)}</div></div>}
       <footer className="aux-footer">CLEAN SENSI <b> / PERFIL DE MIRA</b></footer>
     </section>
   </div>;
 }
+function DevicePicker({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!pickerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  return <div className="yx-device-picker" ref={pickerRef}>
+    <button ref={triggerRef} type="button" className="yx-device-picker-trigger" aria-label={`Aparelho: ${value}`} aria-haspopup="listbox" aria-expanded={open} aria-controls="optimization-device-options" onClick={() => setOpen(current => !current)} onKeyDown={event => { if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); } }}>
+      <Smartphone size={17} aria-hidden="true" /><span>{value}</span><ChevronRight className={open ? "open" : ""} size={16} aria-hidden="true" />
+    </button>
+    {open && <div className="yx-device-picker-options" id="optimization-device-options" role="listbox" aria-label="Modelos de aparelho">
+      {options.map(option => <button key={option} type="button" role="option" aria-selected={value === option} className={value === option ? "selected" : ""} onClick={() => { onChange(option); setOpen(false); triggerRef.current?.focus(); }}><span>{option}</span>{value === option && <Check size={16} aria-hidden="true" />}</button>)}
+    </div>}
+  </div>;
+}
+
 function AuxToggle({ label, description, value, onClick, icon: Icon }: { label: string; description: string; value: boolean; onClick: () => void; icon: React.ElementType }) { return <button type="button" className="aux-toggle-row yx-aim-row" aria-pressed={value} onClick={onClick}><span className="termux-code-icon" aria-hidden="true"><Icon size={22} /></span><span className="yx-aim-copy"><b>{label}</b><small>{description}</small></span><i className={value ? "on" : ""}><em /></i></button>; }
 function AuxModule({ name, active, onClick, icon: Icon }: { name: string; active: boolean; onClick: () => void; icon: React.ElementType }) { return <button className={`aux-module ${active ? "active" : ""}`} onClick={onClick}><span className="termux-code-icon" aria-hidden="true"><Icon size={22} /></span><span><b>{name}</b><small>{active ? "Ativado" : "Toque para ativar"}</small></span><i>{active ? <Check size={14} /> : <ChevronRight size={15} />}</i></button>; }
 

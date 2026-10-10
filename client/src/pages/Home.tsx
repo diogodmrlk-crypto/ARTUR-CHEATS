@@ -314,7 +314,7 @@ function AuxilioPage() {
       return;
     }
     if (android) {
-      const appUrl = `intent://#Intent;package=${androidPackage};action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;S.browser_fallback_url=${encodeURIComponent(storeUrl)};end`;
+      const appUrl = `intent://#Intent;scheme=freefire;action=android.intent.action.VIEW;category=android.intent.category.DEFAULT;category=android.intent.category.BROWSABLE;package=${androidPackage};S.browser_fallback_url=${encodeURIComponent(storeUrl)};end`;
       setLaunching(mode);
       window.location.assign(appUrl);
       window.setTimeout(() => setLaunching(current => current === mode ? null : current), 2200);
@@ -373,7 +373,7 @@ function AuxilioPage() {
         <AuxModule name="Ajuste fino" icon={SlidersHorizontal} active={toggles.fine} onClick={() => toggle("fine")} />
         <button type="button" className="aux-module" onClick={quickExitNow}><span className="termux-code-icon" aria-hidden="true"><LogOut size={22} /></span><span><b>Bypass</b><small>Saída rápida</small></span><i><ChevronRight size={15} /></i></button>
       </div>}
-      {tab === "injection" && <div className="aux-injection yx-injection"><div className="aux-action-row"><button onClick={() => openGame("normal")} disabled={Boolean(launching)}>{launching === "normal" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF NORMAL"}</button><button onClick={() => openGame("max")} disabled={Boolean(launching)}>{launching === "max" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF MAX"}</button></div><div className={`aux-injection-state ${launching ? "active" : ""}`}>{launching ? <><RefreshCw className="spin" size={16} /> Solicitando abertura do Free Fire {launching === "max" ? "MAX" : "Normal"}...</> : "Android: abre a versão selecionada. iPhone: abre a página exata na App Store; toque em Abrir para iniciar."}</div><div className="aux-console">{logs.map((log, index) => <div key={`${log}-${index}`} className={log.includes("SUCESSO") ? "success" : ""}><span>[{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}]</span> {log}</div>)}</div></div>}
+      {tab === "injection" && <div className="aux-injection yx-injection"><div className="aux-action-row"><button onClick={() => openGame("normal")} disabled={Boolean(launching)}>{launching === "normal" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF NORMAL"}</button><button onClick={() => openGame("max")} disabled={Boolean(launching)}>{launching === "max" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF MAX"}</button></div><div className={`aux-injection-state ${launching ? "active" : ""}`}>{launching ? <><RefreshCw className="spin" size={16} /> Solicitando abertura do Free Fire {launching === "max" ? "MAX" : "Normal"}...</> : "Normal e MAX são apps separados: cada botão abre sua versão. Se ela não estiver instalada, será aberta a página dessa versão na loja."}</div><div className="aux-console">{logs.map((log, index) => <div key={`${log}-${index}`} className={log.includes("SUCESSO") ? "success" : ""}><span>[{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}]</span> {log}</div>)}</div></div>}
       <footer className="aux-footer">CLEAN SENSI <b> / PERFIL DE MIRA</b></footer>
     </section>
   </div>;

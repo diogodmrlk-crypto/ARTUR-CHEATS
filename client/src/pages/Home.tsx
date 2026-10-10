@@ -304,20 +304,24 @@ function AuxilioPage() {
     const android = /android/i.test(navigator.userAgent);
     const max = mode === "max";
     const androidPackage = max ? "com.dts.freefiremax" : "com.dts.freefireth";
-    const storeUrl = ios ? `https://apps.apple.com/app/${max ? "free-fire-max/id1480516829" : "free-fire/id1300146617"}` : `https://play.google.com/store/apps/details?id=${androidPackage}`;
-    const appUrl = ios ? "freefire://" : `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${androidPackage};S.browser_fallback_url=${encodeURIComponent(storeUrl)};end`;
-    setLaunching(mode);
-    setLogs(value => [...value, `[SISTEMA] Solicitando abertura de Free Fire ${max ? "MAX" : "Normal"}...`]);
+    const appStoreUrl = `https://apps.apple.com/app/${max ? "free-fire-max/id1480516829" : "free-fire/id1300146617"}`;
+    const storeUrl = ios ? appStoreUrl : `https://play.google.com/store/apps/details?id=${androidPackage}`;
+    setLogs(value => [...value, `[SISTEMA] Abrindo Free Fire ${max ? "MAX" : "Normal"}...`]);
+    if (ios) {
+      // iOS does not provide a public, app-specific launch scheme here; the shared freefire:// scheme can target either game.
+      toast.info(`Abrindo a página oficial do Free Fire ${max ? "MAX" : "Normal"}. Toque em “Abrir” na App Store para iniciar.`);
+      window.location.assign(appStoreUrl);
+      return;
+    }
     if (android) {
+      const appUrl = `intent://#Intent;package=${androidPackage};action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;S.browser_fallback_url=${encodeURIComponent(storeUrl)};end`;
+      setLaunching(mode);
       window.location.assign(appUrl);
       window.setTimeout(() => setLaunching(current => current === mode ? null : current), 2200);
-    } else if (ios) {
-      window.location.assign(appUrl);
-      window.setTimeout(() => { if (document.visibilityState === "visible") window.location.assign(storeUrl); setLaunching(current => current === mode ? null : current); }, 1500);
-    } else {
-      window.location.assign(storeUrl);
-      setLaunching(null);
+      return;
     }
+    // Desktop and unsupported mobile browsers go to the exact version's official store listing.
+    window.location.assign(storeUrl);
   };
   const quickExitNow = () => {
     setQuickExit(true);
@@ -369,7 +373,7 @@ function AuxilioPage() {
         <AuxModule name="Ajuste fino" icon={SlidersHorizontal} active={toggles.fine} onClick={() => toggle("fine")} />
         <button type="button" className="aux-module" onClick={quickExitNow}><span className="termux-code-icon" aria-hidden="true"><LogOut size={22} /></span><span><b>Bypass</b><small>Saída rápida</small></span><i><ChevronRight size={15} /></i></button>
       </div>}
-      {tab === "injection" && <div className="aux-injection yx-injection"><div className="aux-action-row"><button onClick={() => openGame("normal")} disabled={Boolean(launching)}>{launching === "normal" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF NORMAL"}</button><button onClick={() => openGame("max")} disabled={Boolean(launching)}>{launching === "max" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF MAX"}</button></div><div className={`aux-injection-state ${launching ? "active" : ""}`}>{launching ? <><RefreshCw className="spin" size={16} /> Solicitando abertura do Free Fire {launching === "max" ? "MAX" : "Normal"}...</> : "Escolha uma versão para abrir. Se não estiver instalada, será aberta a loja."}</div><div className="aux-console">{logs.map((log, index) => <div key={`${log}-${index}`} className={log.includes("SUCESSO") ? "success" : ""}><span>[{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}]</span> {log}</div>)}</div></div>}
+      {tab === "injection" && <div className="aux-injection yx-injection"><div className="aux-action-row"><button onClick={() => openGame("normal")} disabled={Boolean(launching)}>{launching === "normal" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF NORMAL"}</button><button onClick={() => openGame("max")} disabled={Boolean(launching)}>{launching === "max" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF MAX"}</button></div><div className={`aux-injection-state ${launching ? "active" : ""}`}>{launching ? <><RefreshCw className="spin" size={16} /> Solicitando abertura do Free Fire {launching === "max" ? "MAX" : "Normal"}...</> : "Android: abre a versão selecionada. iPhone: abre a página exata na App Store; toque em Abrir para iniciar."}</div><div className="aux-console">{logs.map((log, index) => <div key={`${log}-${index}`} className={log.includes("SUCESSO") ? "success" : ""}><span>[{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}]</span> {log}</div>)}</div></div>}
       <footer className="aux-footer">CLEAN SENSI <b> / PERFIL DE MIRA</b></footer>
     </section>
   </div>;

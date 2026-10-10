@@ -14,6 +14,7 @@ import {
   Crosshair,
   Crown,
   Gauge,
+  Flame,
   Grid3X3,
   Globe2,
   History,
@@ -68,6 +69,25 @@ const valueLabels: { key: keyof SensitivityValues; label: string; icon: string }
   { key: "scope4x", label: "Mira 4x", icon: "4×" },
   { key: "awm", label: "AWM", icon: "⌁" },
 ];
+
+
+const OPTIMIZATION_STORAGE_KEY = "clean-sensi-optimization-options-v1";
+const OPTIMIZATION_OPTIONS = [
+  { key: "reduceLag", label: "Reduzir lags", description: "Sugestões para diminuir travamentos durante as partidas.", recommendation: "No Free Fire, teste Gráficos no modo Suave e desative Sombras.", icon: Zap },
+  { key: "prioritizeFps", label: "Priorizar FPS", description: "Dê preferência à fluidez, se o aparelho suportar.", recommendation: "Em Gráficos, selecione FPS Alto. Se o celular esquentar ou travar, reduza um nível.", icon: Gauge },
+  { key: "freeMemory", label: "Liberar memória", description: "Prepare o aparelho antes de abrir o jogo.", recommendation: "Feche aplicativos e pause downloads em segundo plano antes de iniciar a partida.", icon: LayoutDashboard },
+  { key: "stableNetwork", label: "Estabilizar conexão", description: "Veja dicas para reduzir oscilações de rede.", recommendation: "Use uma rede Wi-Fi ou dados móveis com sinal constante e pause outros downloads.", icon: Wifi },
+  { key: "reduceHeat", label: "Evitar aquecimento", description: "Lembretes para prevenir queda de desempenho térmico.", recommendation: "Evite jogar enquanto carrega e faça uma pausa se o aparelho ficar quente.", icon: Flame },
+] as const;
+type OptimizationOptionKey = (typeof OPTIMIZATION_OPTIONS)[number]["key"];
+type OptimizationOptionsState = Record<OptimizationOptionKey, boolean>;
+const DEFAULT_OPTIMIZATION_OPTIONS: OptimizationOptionsState = {
+  reduceLag: true,
+  prioritizeFps: true,
+  freeMemory: true,
+  stableNetwork: true,
+  reduceHeat: false,
+};
 
 type View = "home" | "auxilio" | "info" | "profile";
 type AdminView = "overview" | "licenses";
@@ -252,14 +272,33 @@ function AuxilioPage() {
   const [launching, setLaunching] = useState<"normal" | "max" | null>(null);
   const [logs, setLogs] = useState<string[]>(["[SISTEMA] Auxílio carregado com segurança."]);
   const [quickExit, setQuickExit] = useState(false);
-  const [optimizationSystem, setOptimizationSystem] = useState<(typeof OPERATING_SYSTEMS)[number]>("android");
-  const [optimizationDevice, setOptimizationDevice] = useState(androidDevices[0]);
-  const [optimizationPerformance, setOptimizationPerformance] = useState<(typeof PERFORMANCE_LEVELS)[number]>("high");
-  const [optimizationResult, setOptimizationResult] = useState<SensitivityValues | null>(null);
-  const optimizationDevices = optimizationSystem === "android" ? androidDevices : iosDevices;
-  const optimize = trpc.generator.generate.useMutation({ onSuccess: data => { setOptimizationResult(data.values); toast.success("Ajustes de otimização gerados e salvos no histórico"); }, onError: error => toast.error(error.message) });
-  useEffect(() => { setOptimizationDevice(optimizationDevices[0]); setOptimizationResult(null); }, [optimizationSystem]);
+  const [optimizationToggles, setOptimizationToggles] = useState<OptimizationOptionsState>(DEFAULT_OPTIMIZATION_OPTIONS);
+  const [optimizationSettingsLoaded, setOptimizationSettingsLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(OPTIMIZATION_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<OptimizationOptionsState>;
+        setOptimizationToggles({
+          reduceLag: typeof parsed.reduceLag === "boolean" ? parsed.reduceLag : DEFAULT_OPTIMIZATION_OPTIONS.reduceLag,
+          prioritizeFps: typeof parsed.prioritizeFps === "boolean" ? parsed.prioritizeFps : DEFAULT_OPTIMIZATION_OPTIONS.prioritizeFps,
+          freeMemory: typeof parsed.freeMemory === "boolean" ? parsed.freeMemory : DEFAULT_OPTIMIZATION_OPTIONS.freeMemory,
+          stableNetwork: typeof parsed.stableNetwork === "boolean" ? parsed.stableNetwork : DEFAULT_OPTIMIZATION_OPTIONS.stableNetwork,
+          reduceHeat: typeof parsed.reduceHeat === "boolean" ? parsed.reduceHeat : DEFAULT_OPTIMIZATION_OPTIONS.reduceHeat,
+        });
+      }
+    } catch { /* Se o armazenamento local estiver indisponível, mantém as sugestões padrão. */ }
+    setOptimizationSettingsLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (!optimizationSettingsLoaded) return;
+    try { window.localStorage.setItem(OPTIMIZATION_STORAGE_KEY, JSON.stringify(optimizationToggles)); }
+    catch { /* A interface continua funcionando mesmo sem armazenamento local. */ }
+  }, [optimizationSettingsLoaded, optimizationToggles]);
+  const activeOptimizationOptions = OPTIMIZATION_OPTIONS.filter(option => optimizationToggles[option.key]);
   const toggle = (key: keyof typeof toggles) => setToggles(value => ({ ...value, [key]: !value[key] }));
+  const toggleOptimization = (key: OptimizationOptionKey) => setOptimizationToggles(value => ({ ...value, [key]: !value[key] }));
+  const restoreOptimizationOptions = () => setOptimizationToggles({ ...DEFAULT_OPTIMIZATION_OPTIONS });
   const openGame = (mode: "normal" | "max") => {
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const android = /android/i.test(navigator.userAgent);
@@ -316,15 +355,11 @@ function AuxilioPage() {
         <AuxToggle label="Controle de Recuo" description="Ajuste fino do controle" icon={MoveDown} value={toggles.recoil} onClick={() => toggle("recoil")} />
         <AuxToggle label="Ajuste Fino de Precisão" description="Personalize o perfil de mira" icon={SlidersHorizontal} value={toggles.fine} onClick={() => toggle("fine")} />
       </div>}
-      {tab === "sensi" && <section className="yx-optimization-panel">
-        <header className="yx-optimization-header"><div className="yx-optimization-mark"><Gauge size={24} /></div><div><span>PERFIL DE DISPOSITIVO</span><h3>Configure e gere seus ajustes</h3><p>Escolha o aparelho e a prioridade. Os valores serão salvos no histórico para você copiar no jogo.</p></div></header>
-        <div className="yx-optimization-grid">
-          <div className="yx-optimization-card"><span className="card-step">01</span><h4>Sistema operacional</h4><div className="yx-optimization-os">{OPERATING_SYSTEMS.map(os => <button type="button" key={os} className={optimizationSystem === os ? "selected" : ""} aria-pressed={optimizationSystem === os} onClick={() => { setOptimizationSystem(os); setOptimizationResult(null); }}>{os === "android" ? <Smartphone size={19} /> : <Apple size={19} />}{OS_LABELS[os]}</button>)}</div></div>
-          <div className="yx-optimization-card"><span className="card-step">02</span><h4>Seu aparelho</h4><DevicePicker value={optimizationDevice} options={optimizationDevices} onChange={device => { setOptimizationDevice(device); setOptimizationResult(null); }} /></div>
-          <div className="yx-optimization-card yx-optimization-profile"><span className="card-step">03</span><h4>Prioridade do perfil</h4><div className="yx-optimization-levels">{PERFORMANCE_LEVELS.map(level => <button type="button" key={level} className={optimizationPerformance === level ? "selected" : ""} aria-pressed={optimizationPerformance === level} onClick={() => { setOptimizationPerformance(level); setOptimizationResult(null); }}><b>{PERFORMANCE_LABELS[level]}</b><small>{level === "low" ? "Economia" : level === "medium" ? "Equilíbrio" : "Fluidez"}</small></button>)}</div></div>
-        </div>
-        <div className="yx-optimization-action"><span><ShieldCheck size={15} /> Gere valores para copiar e configurar manualmente no jogo.</span><button type="button" className="primary-button" onClick={() => optimize.mutate({ operatingSystem: optimizationSystem, device: optimizationDevice, performance: optimizationPerformance })} disabled={optimize.isPending}>{optimize.isPending ? <><RefreshCw size={16} className="spin" /> GERANDO...</> : <><Sparkles size={16} /> GERAR OTIMIZAÇÃO <ChevronRight size={17} /></>}</button></div>
-        {optimizationResult && <div className="yx-optimization-result"><header><div><span>RESULTADO PRONTO</span><h4>Ajustes para {optimizationDevice}</h4></div><button type="button" className="ghost-button" onClick={async () => { try { await copyToClipboard(valueLabels.map(item => `${item.label}: ${optimizationResult[item.key]}`).join("\n")); toast.success("Todos os ajustes foram copiados"); } catch { toast.error("Não foi possível copiar os ajustes"); } }}><Copy size={15} /> Copiar tudo</button></header><div className="yx-optimization-values">{valueLabels.map(item => <div className="yx-optimization-value" key={item.key}><span>{item.icon}</span><b>{item.label}</b><strong>{optimizationResult[item.key]}</strong><button type="button" aria-label={`Copiar ${item.label}`} onClick={async () => { try { await copyToClipboard(String(optimizationResult[item.key])); toast.success(`${item.label} copiado`); } catch { toast.error("Não foi possível copiar o ajuste"); } }}><Copy size={14} /></button></div>)}</div></div>}
+      {tab === "sensi" && <section className="yx-optimization-panel yx-optimization-toggle-panel">
+        <header className="yx-optimization-header"><div className="yx-optimization-mark"><SlidersHorizontal size={23} /></div><div><span>AJUSTES DO JOGO</span><h3>Opções de otimização</h3><p>Ative as recomendações que deseja consultar antes de jogar. Suas escolhas ficam salvas neste aparelho.</p></div></header>
+        <div className="yx-optimization-toggles">{OPTIMIZATION_OPTIONS.map(option => { const Icon = option.icon; const enabled = optimizationToggles[option.key]; return <button type="button" key={option.key} className={`yx-optimization-toggle ${enabled ? "active" : ""}`} aria-pressed={enabled} onClick={() => toggleOptimization(option.key)}><span className="yx-optimization-toggle-icon"><Icon size={20} /></span><span className="yx-optimization-toggle-copy"><b>{option.label}</b><small>{option.description}</small></span><span className="yx-optimization-switch" aria-hidden="true"><i /></span></button>; })}</div>
+        <div className="yx-optimization-summary"><div><b>{activeOptimizationOptions.length} de {OPTIMIZATION_OPTIONS.length} recomendações selecionadas</b><small>Preferências salvas automaticamente neste aparelho.</small></div><button type="button" className="ghost-button" onClick={restoreOptimizationOptions}>Restaurar padrão</button></div>
+        <div className="yx-optimization-guidance"><header><div><span>RECOMENDAÇÕES SELECIONADAS</span><small>Aplique estas opções manualmente no jogo ou no aparelho.</small></div></header>{activeOptimizationOptions.length ? <ul>{activeOptimizationOptions.map(option => { const Icon = option.icon; return <li key={option.key}><span className="yx-optimization-guidance-icon"><Icon size={16} /></span><div><b>{option.label}</b><small>{option.recommendation}</small></div></li>; })}</ul> : <p className="yx-optimization-empty">Ative um toggle para ver as recomendações correspondentes.</p>}<p className="yx-optimization-disclaimer"><ShieldCheck size={15} /> Estes toggles guardam suas preferências e mostram dicas. O site não altera automaticamente as configurações do Android nem do Free Fire.</p></div>
       </section>}
       {tab === "modules" && <div className="aux-module-grid yx-module-grid">
         <AuxModule name="Mira leve" icon={Crosshair} active={toggles.light} onClick={() => toggle("light")} />
@@ -339,37 +374,6 @@ function AuxilioPage() {
     </section>
   </div>;
 }
-function DevicePicker({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const pickerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOutside = (event: PointerEvent) => {
-      if (!pickerRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
-    };
-    document.addEventListener("pointerdown", closeOutside);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOutside);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [open]);
-
-  return <div className="yx-device-picker" ref={pickerRef}>
-    <button ref={triggerRef} type="button" className="yx-device-picker-trigger" aria-label={`Aparelho: ${value}`} aria-haspopup="listbox" aria-expanded={open} aria-controls="optimization-device-options" onClick={() => setOpen(current => !current)} onKeyDown={event => { if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); } }}>
-      <Smartphone size={17} aria-hidden="true" /><span>{value}</span><ChevronRight className={open ? "open" : ""} size={16} aria-hidden="true" />
-    </button>
-    {open && <div className="yx-device-picker-options" id="optimization-device-options" role="listbox" aria-label="Modelos de aparelho">
-      {options.map(option => <button key={option} type="button" role="option" aria-selected={value === option} className={value === option ? "selected" : ""} onClick={() => { onChange(option); setOpen(false); triggerRef.current?.focus(); }}><span>{option}</span>{value === option && <Check size={16} aria-hidden="true" />}</button>)}
-    </div>}
-  </div>;
-}
-
 function AuxToggle({ label, description, value, onClick, icon: Icon }: { label: string; description: string; value: boolean; onClick: () => void; icon: React.ElementType }) { return <button type="button" className="aux-toggle-row yx-aim-row" aria-pressed={value} onClick={onClick}><span className="termux-code-icon" aria-hidden="true"><Icon size={22} /></span><span className="yx-aim-copy"><b>{label}</b><small>{description}</small></span><i className={value ? "on" : ""}><em /></i></button>; }
 function AuxModule({ name, active, onClick, icon: Icon }: { name: string; active: boolean; onClick: () => void; icon: React.ElementType }) { return <button className={`aux-module ${active ? "active" : ""}`} onClick={onClick}><span className="termux-code-icon" aria-hidden="true"><Icon size={22} /></span><span><b>{name}</b><small>{active ? "Ativado" : "Toque para ativar"}</small></span><i>{active ? <Check size={14} /> : <ChevronRight size={15} />}</i></button>; }
 

@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import superjson from "superjson";
+import { durationFromStoredExpiry, durationInDays, DURATION_UNITS, PLAN_CATALOG, storedExpiryForPlan } from "../shared/rbxis";
 
 type MockKey = {
   id?: string; key: string; username?: string; used?: boolean; device?: string; expire?: number;
@@ -10,6 +11,8 @@ type MockKey = {
 
 const MOCKAPI_KEYS_URL = process.env.MOCKAPI_KEYS_URL?.trim() || "https://6ac92b96fd7c536b1bda8e99.mockapi.io/licencas";
 const ADMIN_KEY = process.env.RBXIS_ADMIN_KEY?.trim() || "";
+const VALID_PLAN_IDS = new Set<string>(PLAN_CATALOG.map(plan => plan.id));
+const VALID_DURATION_UNITS = new Set<string>(DURATION_UNITS);
 const SESSION_COOKIE = "rbxis_session_v3";
 const secret = () => process.env.RBXIS_SESSION_SECRET || "";
 const encode = (value: string) => Buffer.from(value).toString("base64url");
@@ -94,8 +97,8 @@ function numericId(value: MockKey) {
 function asLicense(value: MockKey) {
   const key = normalize(value);
   const expires = key.expiresAt ? new Date(key.expiresAt * 1000) : null;
-  const durationUnit = key.type === "hourly" ? "hours" : key.type === "weekly" ? "weeks" : key.type === "monthly" ? "months" : key.type === "yearly" ? "years" : "days";
-  return { id: numericId(key), userId: numericId({ ...key, key: `${key.key}:user` }), username: key.username ?? key.key, accessKey: key.key, planId: key.type ?? "custom", durationValue: key.expire ?? 0, durationUnit, expiresAt: expires, status: key.status ?? (key.expiresAt && key.expiresAt <= Math.floor(Date.now() / 1000) ? "revoked" : "active"), deviceId: key.device || null, used: Boolean(key.used || key.device || key.activatedAt), lastLoginAt: key.activatedAt ? new Date(key.activatedAt * 1000) : null, createdAt: new Date((key.createdAt ?? 0) * 1000), updatedAt: new Date() };
+  const duration = durationFromStoredExpiry(key.type ?? "daily", key.expire ?? 0);
+  return { id: numericId(key), userId: numericId({ ...key, key: `${key.key}:user` }), username: key.username ?? key.key, accessKey: key.key, planId: key.type ?? "custom", durationValue: duration.value, durationUnit: duration.unit, expiresAt: expires, status: key.status ?? (key.expiresAt && key.expiresAt <= Math.floor(Date.now() / 1000) ? "revoked" : "active"), deviceId: key.device || null, used: Boolean(key.used || key.device || key.activatedAt), lastLoginAt: key.activatedAt ? new Date(key.activatedAt * 1000) : null, createdAt: new Date((key.createdAt ?? 0) * 1000), updatedAt: new Date() };
 }
 function bodyInput(input: any) {
   if (input && typeof input === "object" && input["0"] !== undefined) {
@@ -103,7 +106,7 @@ function bodyInput(input: any) {
   }
   return input?.json ?? input ?? {};
 }
-function durationDays(value: number, unit: string) { return unit === "hours" ? value / 24 : unit === "days" ? value : unit === "weeks" ? value * 7 : unit === "months" ? value * 30 : value * 365; }
+function durationDays(value: number, unit: string) { return durationInDays(value, unit as (typeof DURATION_UNITS)[number]); }
 function addDuration(start: Date, value: number, unit: string) { const d = new Date(start); if (unit === "hours") d.setTime(d.getTime() + value * 60 * 60 * 1000); else if (unit === "days") d.setDate(d.getDate() + value); else if (unit === "weeks") d.setDate(d.getDate() + value * 7); else if (unit === "months") d.setMonth(d.getMonth() + value); else d.setFullYear(d.getFullYear() + value); return Math.floor(d.getTime() / 1000); }
 function activationExpirySeconds(type: string, expire: number, activatedAt: number) {
   if (type === "perm") return 0;
@@ -260,16 +263,21 @@ export default async function trpc(req: any, res: any) {
     }
     const match = (id: number) => raw.find((value) => numericId(value) === id);
     if (path === "admin.createLicense") {
-      const planId = String(data.planId ?? "daily");
+      const username = String(data.username ?? "").trim();
+      const planId = String(data.planId ?? "");
       const durationValue = Number(data.durationValue);
-      const durationUnit = String(data.durationUnit ?? "days");
+      const durationUnit = String(data.durationUnit ?? "");
+      if (username.length < 2 || username.length > 60) return fail(res, 400, "Informe um usuário entre 2 e 60 caracteres");
+      if (!VALID_PLAN_IDS.has(planId)) return fail(res, 400, "Plano inválido");
+      if (!Number.isInteger(durationValue) || durationValue < 1 || durationValue > 3650) return fail(res, 400, "Duração inválida");
+      if (!VALID_DURATION_UNITS.has(durationUnit)) return fail(res, 400, "Unidade de duração inválida");
       if (planId === "hourly" && (durationValue !== 1 || durationUnit !== "hours")) return fail(res, 400, "O plano de 1 hora precisa ter duração fixa de 1 hora");
+      if (planId === "monthly" && (durationValue !== 1 || durationUnit !== "months")) return fail(res, 400, "O plano mensal precisa ter duração fixa de 1 mês (30 dias)");
       if (planId !== "hourly" && durationUnit === "hours") return fail(res, 400, "A unidade horas é reservada ao plano de 1 hora");
       const now = Math.floor(Date.now() / 1000);
-      const type = planId === "hourly" ? "hourly" : planId === "weekly" ? "weekly" : planId === "perm" ? "perm" : "daily";
-      const permanent = type === "perm";
-      const expire = permanent ? 0 : type === "hourly" ? 1 : type === "weekly" ? 7 : 1;
-      const created = await mockRequest<MockKey>("", { method: "POST", body: JSON.stringify({ key: `CLEAN-SENSI-${type}-${randomBytes(6).toString("hex").toUpperCase()}`, username: String(data.username ?? "").trim(), used: false, device: "", expire, type, createdAt: now, activatedAt: 0, expiresAt: 0, status: "active" }) });
+      const type = planId;
+      const expire = storedExpiryForPlan(type, durationValue, durationUnit as (typeof DURATION_UNITS)[number]);
+      const created = await mockRequest<MockKey>("", { method: "POST", body: JSON.stringify({ key: `CLEAN-SENSI-${type}-${randomBytes(6).toString("hex").toUpperCase()}`, username, used: false, device: "", expire, type, createdAt: now, activatedAt: 0, expiresAt: 0, status: "active" }) });
       return ok(res, asLicense(created));
     }
     const id = Number(data.id); const current = match(id);
@@ -279,8 +287,28 @@ export default async function trpc(req: any, res: any) {
     if (path === "admin.revokeLicense") patch.status = "revoked";
     else if (path === "admin.blockLicense") patch.status = "blocked";
     else if (path === "admin.resetDevice") { patch.device = ""; patch.activatedAt = 0; patch.used = false; patch.expiresAt = 0; }
-    else if (path === "admin.extendLicense") patch.expiresAt = addDuration(new Date((current.expiresAt ?? 0) * 1000), Number(data.durationValue), String(data.durationUnit));
-    else if (path === "admin.updateLicense") { if (data.status) patch.status = data.status; if (data.planId) { patch.type = data.planId; if (data.planId === "hourly" && current.type !== "hourly") { patch.expire = 1; patch.expiresAt = current.activatedAt ? activationExpirySeconds("hourly", 1, current.activatedAt) : 0; } } if (data.durationValue && data.durationUnit) { patch.expire = (data.planId === "hourly" || (!data.planId && current.type === "hourly")) && data.durationUnit === "hours" ? Number(data.durationValue) : durationDays(Number(data.durationValue), String(data.durationUnit)); patch.expiresAt = addDuration(new Date(), Number(data.durationValue), String(data.durationUnit)); } }
+    else if (path === "admin.extendLicense") { const currentExpiry = Number(current.expiresAt ?? 0); const base = currentExpiry > Math.floor(Date.now() / 1000) ? new Date(currentExpiry * 1000) : new Date(); patch.expiresAt = addDuration(base, Number(data.durationValue), String(data.durationUnit)); }
+    else if (path === "admin.updateLicense") {
+      if (data.status) patch.status = data.status;
+      if (data.planId) {
+        const nextType = String(data.planId);
+        if (!VALID_PLAN_IDS.has(nextType)) return fail(res, 400, "Plano inválido");
+        patch.type = nextType;
+        if (nextType === "hourly" && current.type !== "hourly") { patch.expire = 1; patch.expiresAt = current.activatedAt ? activationExpirySeconds("hourly", 1, current.activatedAt) : 0; }
+        if (nextType === "monthly" && current.type !== "monthly") { patch.expire = 30; patch.expiresAt = current.activatedAt ? Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 : 0; }
+        if (nextType === "perm" && current.type !== "perm") { patch.expire = 0; patch.expiresAt = 0; }
+      }
+      if (data.durationValue !== undefined || data.durationUnit !== undefined) {
+        const value = Number(data.durationValue);
+        const unit = String(data.durationUnit ?? "");
+        const nextType = String(data.planId ?? current.type ?? "daily");
+        if (!Number.isInteger(value) || value < 1 || value > 3650 || !VALID_DURATION_UNITS.has(unit)) return fail(res, 400, "Duração inválida");
+        if ((nextType === "hourly" && (value !== 1 || unit !== "hours")) || (nextType === "monthly" && (value !== 1 || unit !== "months"))) return fail(res, 400, "A duração não corresponde ao plano selecionado");
+        if (nextType !== "hourly" && unit === "hours") return fail(res, 400, "A unidade horas é reservada ao plano de 1 hora");
+        patch.expire = storedExpiryForPlan(nextType, value, unit as (typeof DURATION_UNITS)[number]);
+        patch.expiresAt = addDuration(new Date(), value, unit);
+      }
+    }
     else return fail(res, 404, `Procedure not found: ${path}`);
     return ok(res, asLicense(await mockRequest<MockKey>(`/${encodeURIComponent(current.id ?? current.key)}`, { method: "PUT", body: JSON.stringify(patch) })));
   } catch (error: any) { return fail(res, 500, error?.message ?? "Internal server error"); }

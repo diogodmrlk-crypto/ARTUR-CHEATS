@@ -12,6 +12,11 @@ describe("MockAPI key expiration", () => {
     expect(activationExpirySeconds("perm", 0, 1_800_000_000)).toBe(0);
   });
 
+  it("expires a monthly key exactly 30 days after first activation", () => {
+    const activatedAt = 1_800_000_000;
+    expect(activationExpirySeconds("monthly", 30, activatedAt)).toBe(activatedAt + 30 * 24 * 60 * 60);
+  });
+
   it("maps the hourly type to a one-hour duration", () => {
     const license = mockKeyToLicense({ key: "CLEAN-SENSI-hourly-test", used: false, device: "", expire: 1, type: "hourly", createdAt: 1_800_000_000, activatedAt: 0, expiresAt: 0 });
     expect(license.planId).toBe("hourly");
@@ -36,6 +41,25 @@ describe("MockAPI key expiration", () => {
     }
   });
 });
+
+  it("posts a monthly key as 30 stored days and maps it back to one month", async () => {
+    let posted: Record<string, unknown> | undefined;
+    const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async (_input, init) => {
+      posted = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return new Response(JSON.stringify({ id: "monthly-test-1", ...posted }), { status: 201, headers: { "content-type": "application/json" } });
+    });
+    try {
+      const key = await createMockKey({ username: "monthly_test", planId: "monthly", durationValue: 1, durationUnit: "months" });
+      const license = mockKeyToLicense(key);
+      expect(posted).toMatchObject({ username: "monthly_test", type: "monthly", expire: 30, used: false, activatedAt: 0, expiresAt: 0, status: "active" });
+      expect(String(posted?.key)).toMatch(/^CLEAN-SENSI-monthly-/);
+      expect(license.planId).toBe("monthly");
+      expect(license.durationValue).toBe(1);
+      expect(license.durationUnit).toBe("months");
+    } finally {
+      fetch.mockRestore();
+    }
+  });
 
 describe("MockAPI keys integration", () => {
   it("reads every collection page so bulk copy/reset can include all keys", async () => {

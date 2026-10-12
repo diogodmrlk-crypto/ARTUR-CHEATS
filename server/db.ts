@@ -1,6 +1,6 @@
 import { InsertProductLicense, InsertSensitivityHistory, InsertUser, ProductLicense } from "../drizzle/schema";
 import { createMockKey, deleteMockKey, findMockKey, getMockKey, listMockKeys, mockKeyId, mockKeyToLicense, updateMockKey } from "./mockapi";
-import { activationExpirySeconds, DURATION_UNITS } from "../shared/rbxis";
+import { activationExpirySeconds, storedExpiryForPlan, DURATION_UNITS } from "../shared/rbxis";
 
 type DurationUnit = (typeof DURATION_UNITS)[number];
 
@@ -44,14 +44,14 @@ export async function getActiveLicenseSession(userId: number, licenseId: number)
   return { license, user: { id: license.userId } as any };
 }
 
-export async function markLicenseLoggedIn(id: number, deviceId: string) {
+export async function markLicenseLoggedIn(id: number, deviceId: string): Promise<Date | undefined> {
   const key = (await listMockKeys()).find(item => mockKeyToLicense(item).id === id);
-  if (key?.id) {
-    const now = Math.floor(Date.now() / 1000);
-    const activatedAt = key.activatedAt || now;
-    const expiresAt = key.expiresAt || activationExpirySeconds(key.type, key.expire, activatedAt);
-    await updateMockKey(key.id, { device: deviceId, used: true, activatedAt, expiresAt, onlineAt: now });
-  }
+  if (!key?.id) return undefined;
+  const now = Math.floor(Date.now() / 1000);
+  const activatedAt = key.activatedAt || now;
+  const expiresAt = key.expiresAt || activationExpirySeconds(key.type, key.expire, activatedAt);
+  await updateMockKey(key.id, { device: deviceId, used: true, activatedAt, expiresAt, onlineAt: now });
+  return expiresAt ? new Date(expiresAt * 1000) : undefined;
 }
 
 export async function listProductLicenses() {
@@ -77,9 +77,15 @@ export async function updateProductLicense(id: number, values: Partial<Pick<Prod
     if (nextType === "hourly" && key.type !== "hourly") {
       patch.expire = 1;
       patch.expiresAt = key.activatedAt ? activationExpirySeconds("hourly", 1, key.activatedAt) : 0;
+    } else if (nextType === "monthly" && key.type !== "monthly") {
+      patch.expire = 30;
+      patch.expiresAt = key.activatedAt ? Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 : 0;
+    } else if (nextType === "perm" && key.type !== "perm") {
+      patch.expire = 0;
+      patch.expiresAt = 0;
     }
   }
-  if (values.durationValue) patch.expire = values.durationValue;
+  if (values.durationValue) patch.expire = values.durationUnit ? storedExpiryForPlan(values.planId ?? key.type, values.durationValue, values.durationUnit) : values.durationValue;
   return mockKeyToLicense(await updateMockKey(key.id, patch));
 }
 

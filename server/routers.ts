@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { DURATION_UNITS, OPERATING_SYSTEMS, PERFORMANCE_LEVELS } from "../shared/rbxis";
+import { DURATION_UNITS, OPERATING_SYSTEMS, PERFORMANCE_LEVELS, PLAN_CATALOG } from "../shared/rbxis";
 import {
   createHistory,
   createProductLicense,
@@ -21,10 +21,14 @@ import { clearSessionCookie, getAdminAccessKey, hasSessionSecret, normalizeAdmin
 import { publicProcedure, rbxisAdminProcedure, rbxisProcedure, router } from "./_core/trpc";
 
 const durationUnitSchema = z.enum(DURATION_UNITS);
+const planIdSchema = z.string().refine(value => PLAN_CATALOG.some(plan => plan.id === value), "Plano inválido");
 const statusSchema = z.enum(["active", "revoked", "blocked"]);
-const createLicenseSchema = z.object({ username: z.string().trim().min(2).max(60), planId: z.string().min(1).max(40), durationValue: z.number().int().min(1).max(3650), durationUnit: durationUnitSchema }).superRefine((input, context) => {
+const createLicenseSchema = z.object({ username: z.string().trim().min(2).max(60), planId: planIdSchema, durationValue: z.number().int().min(1).max(3650), durationUnit: durationUnitSchema }).superRefine((input, context) => {
   if (input.planId === "hourly" && (input.durationValue !== 1 || input.durationUnit !== "hours")) {
     context.addIssue({ code: "custom", path: ["durationUnit"], message: "O plano de 1 hora precisa ter duração fixa de 1 hora" });
+  }
+  if (input.planId === "monthly" && (input.durationValue !== 1 || input.durationUnit !== "months")) {
+    context.addIssue({ code: "custom", path: ["durationUnit"], message: "O plano mensal precisa ter duração fixa de 1 mês (30 dias)" });
   }
   if (input.planId !== "hourly" && input.durationUnit === "hours") {
     context.addIssue({ code: "custom", path: ["durationUnit"], message: "A unidade horas é reservada ao plano de 1 hora" });
@@ -89,9 +93,9 @@ export const appRouter = router({
           throw new TRPCError({ code: "FORBIDDEN", message: "Esta licença já está vinculada a outro dispositivo" });
         }
         const activatedNow = !row.license.lastLoginAt;
-        await markLicenseLoggedIn(row.license.id, deviceId);
+        const activatedExpiry = await markLicenseLoggedIn(row.license.id, deviceId);
         const sessionToken = setSessionCookie(ctx.req, ctx.res, { role: "user", userId: row.user.id, licenseId: row.license.id, username: row.license.username });
-        return { success: true as const, username: row.license.username, expiresAt: row.license.expiresAt, sessionToken, activatedNow };
+        return { success: true as const, username: row.license.username, expiresAt: activatedExpiry ?? row.license.expiresAt, sessionToken, activatedNow };
       }),
     adminLogin: publicProcedure
       .input(z.object({ adminKey: z.string().min(1) }))
@@ -148,7 +152,7 @@ export const appRouter = router({
         }
       }),
     updateLicense: rbxisAdminProcedure
-      .input(z.object({ id: z.number().int().positive(), status: statusSchema.optional(), planId: z.string().min(1).max(40).optional(), durationValue: z.number().int().min(1).max(3650).optional(), durationUnit: durationUnitSchema.optional() }))
+      .input(z.object({ id: z.number().int().positive(), status: statusSchema.optional(), planId: planIdSchema.optional(), durationValue: z.number().int().min(1).max(3650).optional(), durationUnit: durationUnitSchema.optional() }))
       .mutation(async ({ input }) => {
         const { id, ...values } = input;
         return updateProductLicense(id, values);

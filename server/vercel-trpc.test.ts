@@ -65,6 +65,71 @@ describe("Vercel admin login", () => {
     expect(vi.mocked(globalThis.fetch)).not.toHaveBeenCalled();
   });
 
+  it("creates a monthly MockAPI key and expires it 30 days after first login", async () => {
+    const rows: Record<string, unknown>[] = [];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? "GET";
+      if (method === "GET") return new Response(JSON.stringify(rows), { status: 200, headers: { "content-type": "application/json" } });
+      if (method === "POST") {
+        const row = { id: "monthly-vercel-1", ...JSON.parse(String(init?.body)) };
+        rows.push(row);
+        return new Response(JSON.stringify(row), { status: 201, headers: { "content-type": "application/json" } });
+      }
+      if (method === "PUT") {
+        const id = decodeURIComponent(new URL(String(input)).pathname.split("/").pop() ?? "");
+        const row = rows.find(value => value.id === id);
+        if (!row) return new Response("Not found", { status: 404 });
+        Object.assign(row, JSON.parse(String(init?.body)));
+        return new Response(JSON.stringify(row), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      throw new Error(`Unexpected MockAPI method: ${method}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const admin = await invoke("auth.adminLogin", { adminKey: "correct-admin-key" });
+    const created = await invoke("admin.createLicense", { username: "monthly_user", planId: "monthly", durationValue: 1, durationUnit: "months" }, admin.headers["Set-Cookie"]);
+    expect(admin.statusCode).toBe(200);
+    expect(created.statusCode).toBe(200);
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(true);
+    expect(rows[0]).toMatchObject({ username: "monthly_user", type: "monthly", expire: 30, used: false, activatedAt: 0, expiresAt: 0, status: "active" });
+    expect(responseData(created)).toMatchObject({ planId: "monthly", durationValue: 1, durationUnit: "months" });
+
+    const key = String(responseData(created).accessKey);
+    const login = await invoke("auth.login", { accessKey: key, deviceId: "device-monthly-1234" });
+    expect(login.statusCode).toBe(200);
+    expect(Number(rows[0].expiresAt) - Number(rows[0].activatedAt)).toBe(30 * 24 * 60 * 60);
+    const expiryAfterActivation = Number(rows[0].expiresAt);
+    const secondLogin = await invoke("auth.login", { accessKey: key, deviceId: "device-monthly-1234" });
+    expect(secondLogin.statusCode).toBe(200);
+    expect(Number(rows[0].expiresAt)).toBe(expiryAfterActivation);
+  });
+
+  it("rejects monthly creation unless its duration is exactly one month", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if ((init?.method ?? "GET") === "GET") return new Response("[]", { status: 200, headers: { "content-type": "application/json" } });
+      throw new Error("A validação não deve enviar POST à MockAPI");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const admin = await invoke("auth.adminLogin", { adminKey: "correct-admin-key" });
+    const response = await invoke("admin.createLicense", { username: "monthly_user", planId: "monthly", durationValue: 2, durationUnit: "months" }, admin.headers["Set-Cookie"]);
+    expect(response.statusCode).toBe(400);
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("rejects a monthly key after its 30-day expiry even if its stored status is active", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const row = { id: "monthly-expired-1", key: "CLEAN-SENSI-monthly-expired", username: "monthly_user", used: true, device: "device-monthly-1234", expire: 30, type: "monthly", createdAt: now - 31 * 24 * 60 * 60, activatedAt: now - 30 * 24 * 60 * 60 - 1, expiresAt: now - 1, status: "active" };
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if ((init?.method ?? "GET") === "GET") return new Response(JSON.stringify([row]), { status: 200, headers: { "content-type": "application/json" } });
+      throw new Error("Uma key vencida não deve ser atualizada durante o login");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await invoke("auth.login", { accessKey: row.key, deviceId: "device-monthly-1234" });
+    expect(response.statusCode).toBe(403);
+    expect(JSON.parse(response.body).error.json.message).toContain("expirou");
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(false);
+  });
+
   it("fails closed when the session secret is missing", async () => {
     vi.stubEnv("RBXIS_SESSION_SECRET", "");
     const admin = await invoke("auth.adminLogin", { adminKey: "correct-admin-key" });

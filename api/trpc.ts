@@ -1,6 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import superjson from "superjson";
-import { durationFromStoredExpiry, durationInDays, DURATION_UNITS, PLAN_CATALOG, storedExpiryForPlan } from "../shared/rbxis";
 
 type MockKey = {
   id?: string; key: string; username?: string; used?: boolean; device?: string; expire?: number;
@@ -11,12 +10,37 @@ type MockKey = {
 
 const MOCKAPI_KEYS_URL = process.env.MOCKAPI_KEYS_URL?.trim() || "https://6ac92b96fd7c536b1bda8e99.mockapi.io/licencas";
 const ADMIN_KEY = process.env.RBXIS_ADMIN_KEY?.trim() || "";
-const VALID_PLAN_IDS = new Set<string>(PLAN_CATALOG.map(plan => plan.id));
+const DURATION_UNITS = ["hours", "days", "weeks", "months", "years"] as const;
+const VALID_PLAN_IDS = new Set<string>(["hourly", "daily", "weekly", "monthly", "perm"]);
 const VALID_DURATION_UNITS = new Set<string>(DURATION_UNITS);
 const SESSION_COOKIE = "rbxis_session_v3";
 const secret = () => process.env.RBXIS_SESSION_SECRET || "";
 const encode = (value: string) => Buffer.from(value).toString("base64url");
 const sign = (payload: string) => createHmac("sha256", secret()).update(payload).digest("base64url");
+
+function durationInDays(value: number, unit: (typeof DURATION_UNITS)[number]) {
+  if (unit === "hours") return value / 24;
+  if (unit === "days") return value;
+  if (unit === "weeks") return value * 7;
+  if (unit === "months") return value * 30;
+  return value * 365;
+}
+
+function storedExpiryForPlan(planId: string, value: number, unit: (typeof DURATION_UNITS)[number]) {
+  if (planId === "perm") return 0;
+  if (planId === "hourly") return value;
+  return durationInDays(value, unit);
+}
+
+function durationFromStoredExpiry(type: string, expire: number) {
+  const amount = Math.max(0, Number(expire) || 0);
+  if (type === "perm") return { value: 0, unit: "days" as const };
+  if (type === "hourly") return { value: amount, unit: "hours" as const };
+  if (type === "weekly") return { value: Math.max(1, Math.round(amount / 7)), unit: "weeks" as const };
+  if (type === "monthly") return { value: Math.max(1, Math.round(amount / 30)), unit: "months" as const };
+  if (type === "yearly") return { value: Math.max(1, Math.round(amount / 365)), unit: "years" as const };
+  return { value: amount, unit: "days" as const };
+}
 
 function tokenForAdmin() {
   const payload = encode(JSON.stringify({ role: "admin", username: "CLEADMIN00", expiresAt: Date.now() + 2_592_000_000 }));

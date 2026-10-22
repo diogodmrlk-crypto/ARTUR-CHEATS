@@ -71,6 +71,26 @@ const valueLabels: { key: keyof SensitivityValues; label: string; icon: string }
 ];
 
 
+const AUX_TOGGLES_STORAGE_KEY = "clean-sensi-aux-toggles-v1";
+const DEFAULT_AUX_TOGGLES = { light: false, precise: false, stabilize: false, recoil: false, fine: false };
+type AuxTogglesState = typeof DEFAULT_AUX_TOGGLES;
+function loadAuxToggles(): AuxTogglesState {
+  try {
+    const saved = window.localStorage.getItem(AUX_TOGGLES_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved) as Partial<AuxTogglesState>;
+      return {
+        light: typeof parsed.light === "boolean" ? parsed.light : DEFAULT_AUX_TOGGLES.light,
+        precise: typeof parsed.precise === "boolean" ? parsed.precise : DEFAULT_AUX_TOGGLES.precise,
+        stabilize: typeof parsed.stabilize === "boolean" ? parsed.stabilize : DEFAULT_AUX_TOGGLES.stabilize,
+        recoil: typeof parsed.recoil === "boolean" ? parsed.recoil : DEFAULT_AUX_TOGGLES.recoil,
+        fine: typeof parsed.fine === "boolean" ? parsed.fine : DEFAULT_AUX_TOGGLES.fine,
+      };
+    }
+  } catch { /* Se o armazenamento local estiver indisponível, usa os valores padrão. */ }
+  return { ...DEFAULT_AUX_TOGGLES };
+}
+
 const OPTIMIZATION_STORAGE_KEY = "clean-sensi-optimization-options-v1";
 const OPTIMIZATION_OPTIONS = [
   { key: "reduceLag", label: "Reduzir lags", description: "Sugestões para diminuir travamentos durante as partidas.", recommendation: "No Free Fire, teste Gráficos no modo Suave e desative Sombras.", icon: Zap },
@@ -268,7 +288,7 @@ function ResultCard({ values, historyId, isFavorited, onFavorite }: { values: Se
 
 function AuxilioPage() {
   const [tab, setTab] = useState<"aimbot" | "sensi" | "modules" | "injection">("aimbot");
-  const [toggles, setToggles] = useState({ light: false, precise: false, stabilize: false, recoil: false, fine: false });
+  const [toggles, setToggles] = useState<AuxTogglesState>(loadAuxToggles);
   const [launching, setLaunching] = useState<"normal" | "max" | null>(null);
   const [logs, setLogs] = useState<string[]>(["[SISTEMA] Auxílio carregado com segurança."]);
   const [quickExit, setQuickExit] = useState(false);
@@ -296,7 +316,12 @@ function AuxilioPage() {
     catch { /* A interface continua funcionando mesmo sem armazenamento local. */ }
   }, [optimizationSettingsLoaded, optimizationToggles]);
   const activeOptimizationOptions = OPTIMIZATION_OPTIONS.filter(option => optimizationToggles[option.key]);
-  const toggle = (key: keyof typeof toggles) => setToggles(value => ({ ...value, [key]: !value[key] }));
+  const toggle = (key: keyof AuxTogglesState) => {
+    const next = { ...toggles, [key]: !toggles[key] };
+    setToggles(next);
+    try { window.localStorage.setItem(AUX_TOGGLES_STORAGE_KEY, JSON.stringify(next)); }
+    catch { /* A interface continua funcionando mesmo sem armazenamento local. */ }
+  };
   const toggleOptimization = (key: OptimizationOptionKey) => setOptimizationToggles(value => ({ ...value, [key]: !value[key] }));
   const restoreOptimizationOptions = () => setOptimizationToggles({ ...DEFAULT_OPTIMIZATION_OPTIONS });
   const openGame = (mode: "normal" | "max") => {

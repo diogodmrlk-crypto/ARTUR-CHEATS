@@ -1,4 +1,4 @@
-const CACHE_NAME = "clean-sensi-shell-v5";
+const CACHE_NAME = "clean-sensi-shell-v6";
 const APP_SHELL = ["/", "/manifest.json", "/clean-sensi-logo.png", "/clean-sensi-icon-180.png", "/clean-sensi-icon-192.png", "/clean-sensi-icon-512.png", "/clean-sensi-icon-maskable-512.png"];
 
 self.addEventListener("install", event => {

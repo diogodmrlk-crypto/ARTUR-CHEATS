@@ -23,7 +23,7 @@ O painel identifica o administrador como `ARTURADMIN00`. A chave usada para aute
 
 Importe este repositório na Vercel e configure estas variáveis de ambiente em todos os ambientes necessários:
 
-- `RBXIS_ADMIN_KEY`: chave privada e exclusiva para o login administrativo.
+- `RBXIS_ADMIN_KEY`: chave privada e exclusiva para o login administrativo. O padrão desta cópia é `ARTDMIN23K`; altere a variável na Vercel para uma chave privada própria.
 - `RBXIS_SESSION_SECRET`: segredo aleatório longo. Gere um valor novo com `openssl rand -hex 32`.
 - `MOCKAPI_KEYS_URL`: `https://6ade7e8b4e88f1bba4a527ee.mockapi.io/Arturapi`.
 

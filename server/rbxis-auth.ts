@@ -106,7 +106,7 @@ export function clearSessionCookie(req: any, res: any) {
 }
 
 export function getAdminAccessKey() {
-  return process.env.RBXIS_ADMIN_KEY?.trim() || "ARTDMIN23K";
+  return process.env.RBXIS_ADMIN_KEY === undefined ? "ARTDMIN23K" : process.env.RBXIS_ADMIN_KEY.trim();
 }
 
 export function normalizeAdminKey(value: string) {

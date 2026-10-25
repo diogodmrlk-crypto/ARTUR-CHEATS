@@ -9,7 +9,7 @@ type MockKey = {
 };
 
 const MOCKAPI_KEYS_URL = process.env.MOCKAPI_KEYS_URL?.trim() || "https://6ade7e8b4e88f1bba4a527ee.mockapi.io/Arturapi";
-const ADMIN_KEY = process.env.RBXIS_ADMIN_KEY === undefined ? "ARTDMIN23K" : process.env.RBXIS_ADMIN_KEY.trim();
+const ADMIN_KEY = process.env.RBXIS_ADMIN_KEY?.trim() || "";
 const DURATION_UNITS = ["hours", "days", "weeks", "months", "years"] as const;
 const VALID_PLAN_IDS = new Set<string>(["hourly", "daily", "weekly", "monthly", "perm"]);
 const VALID_DURATION_UNITS = new Set<string>(DURATION_UNITS);

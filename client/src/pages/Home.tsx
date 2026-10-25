@@ -71,7 +71,7 @@ const valueLabels: { key: keyof SensitivityValues; label: string; icon: string }
 ];
 
 
-const AUX_TOGGLES_STORAGE_KEY = "clean-sensi-aux-toggles-v1";
+const AUX_TOGGLES_STORAGE_KEY = "artur-cheats-aux-toggles-v1";
 const DEFAULT_AUX_TOGGLES = { light: false, precise: false, stabilize: false, recoil: false, fine: false };
 type AuxTogglesState = typeof DEFAULT_AUX_TOGGLES;
 function loadAuxToggles(): AuxTogglesState {
@@ -91,7 +91,7 @@ function loadAuxToggles(): AuxTogglesState {
   return { ...DEFAULT_AUX_TOGGLES };
 }
 
-const OPTIMIZATION_STORAGE_KEY = "clean-sensi-optimization-options-v1";
+const OPTIMIZATION_STORAGE_KEY = "artur-cheats-optimization-options-v1";
 const OPTIMIZATION_OPTIONS = [
   { key: "reduceLag", label: "Reduzir lags", description: "Sugestões para diminuir travamentos durante as partidas.", recommendation: "No Free Fire, teste Gráficos no modo Suave e desative Sombras.", icon: Zap },
   { key: "prioritizeFps", label: "Priorizar FPS", description: "Dê preferência à fluidez, se o aparelho suportar.", recommendation: "Em Gráficos, selecione FPS Alto. Se o celular esquentar ou travar, reduza um nível.", icon: Gauge },
@@ -159,8 +159,8 @@ function formatExpiry(value: string | Date | null | undefined) {
 function AppLogo({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`brand-mark ${compact ? "brand-mark-compact" : ""}`}>
-      <div className="brand-icon"><img src="/clean-sensi-logo.png" alt="" aria-hidden="true" /></div>
-      {!compact && <div><span className="brand-name">CLEAN SENSI</span><span className="brand-caption">PAINEL DE SENSI</span></div>}
+      <div className="brand-icon"><img src="/artur-cheats-banner.jpeg" alt="" aria-hidden="true" /></div>
+      {!compact && <div><span className="brand-name">ARTUR CHEATS</span><span className="brand-caption">PAINEL DE SENSI</span></div>}
     </div>
   );
 }
@@ -198,30 +198,31 @@ function LoginScreen() {
     <main className="login-shell">
       <div className="login-noise" />
       <div className="login-split-glow" />
-      <header className="login-header"><div className="login-brand-wordmark">CLEAN SENSI</div><div className="secure-chip"><ShieldCheck size={14} /> SISTEMA PROTEGIDO</div></header>
+      <header className="login-header"><div className="login-brand-wordmark">ARTUR CHEATS</div><div className="secure-chip"><ShieldCheck size={14} /> SISTEMA PROTEGIDO</div></header>
       <section className="login-content">
         <div className="login-copy">
 
+          <img className="login-brand-image" src="/artur-cheats-banner.jpeg" alt="ARTUR CHEATS" />
           <span className="eyebrow"><span className="eyebrow-dot" /> ACESSO EXCLUSIVO</span>
-          <h1>CLEAN<br /><em>SENSI</em></h1>
+          <h1>ARTUR<br /><em>CHEATS</em></h1>
           <p>Entre com sua chave e acesse seu espaço de controle.</p>
         </div>
         <div className="login-card-wrap">
-          <div className="login-card-topline"><span className="red-line" /><span>CLEAN SENSI / {adminMode ? "PRIVATE" : "LICENSE"}</span><span className="online-dot" /></div>
+          <div className="login-card-topline"><span className="red-line" /><span>ARTUR CHEATS / {adminMode ? "PRIVATE" : "LICENSE"}</span><span className="online-dot" /></div>
           <div className="login-card">
             <div className="login-card-heading"><div className="card-icon"><LockKeyhole size={21} /></div><div><span className="mini-label">{adminMode ? "PRIVATE" : "ACESSO PRIVATE"}</span><h2>{adminMode ? "Painel administrativo" : "Coloque sua chave abaixo"}</h2></div></div>
             <p className="card-description">{adminMode ? "Acesso restrito ao administrador." : "Informe sua chave de acesso para continuar."}</p>
             <form onSubmit={submit} className="login-form">
-              <label><span>{adminMode ? "Chave de administrador" : "Chave de acesso"}</span><div className="input-shell"><KeyRound size={17} /><input value={accessKey} onChange={event => setAccessKey(event.target.value)} placeholder={adminMode ? "XXXXXXXXXX" : "CLEAN-SENSI-XXX-XXXXXXXXXX"} type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /><button type="button" className="input-action" onClick={() => setAccessKey("")} aria-label="Limpar chave"><X size={15} /></button></div></label>
+              <label><span>{adminMode ? "Chave de administrador" : "Chave de acesso"}</span><div className="input-shell"><KeyRound size={17} /><input value={accessKey} onChange={event => setAccessKey(event.target.value)} placeholder={adminMode ? "XXXXXXXXXX" : "ARTUR-XXX-XXXXXXXXXX"} type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /><button type="button" className="input-action" onClick={() => setAccessKey("")} aria-label="Limpar chave"><X size={15} /></button></div></label>
               <button className="primary-button login-button" disabled={pending}>{pending ? <><RefreshCw size={17} className="spin" /> VALIDANDO...</> : <>{adminMode ? "ENTRAR NO ADMIN" : "ENTRAR NO PAINEL"}<ChevronRight size={18} /></>}</button>
             </form>
-            <a className="discord-login-button" href="https://discord.gg/EDBtEVWpTM" target="_blank" rel="noopener noreferrer"><span className="discord-login-icon"><MessageCircle size={17} /></span><span className="discord-login-copy"><b>Discord</b><small>Suporte e comunidade</small></span><ChevronRight size={17} /></a>
+            <a className="discord-login-button" href="https://discord.gg/TYSCkr9y3j" target="_blank" rel="noopener noreferrer"><span className="discord-login-icon"><MessageCircle size={17} /></span><span className="discord-login-copy"><b>Discord</b><small>Suporte e comunidade</small></span><ChevronRight size={17} /></a>
             <button type="button" className="text-button admin-toggle" onClick={() => { setAdminMode(value => !value); setAccessKey(""); }}>{adminMode ? "Voltar para acesso de usuário" : "Acesso administrativo"}<ChevronRight size={14} /></button>
             <div className="secure-footer"><Wifi size={13} /> CONEXÃO CRIPTOGRAFADA <span /> <span>SESSÃO PRIVADA</span></div>
           </div>
         </div>
       </section>
-      <footer className="login-footer"><span>CLEAN SENSI / AUXILIO DE MIRA</span><span>Auxilio</span><span className="footer-red">●</span></footer>
+      <footer className="login-footer"><span>ARTUR CHEATS / AUXILIO DE MIRA</span><span>Auxilio</span><span className="footer-red">●</span></footer>
       <InstallNotice />
     </main>
   );
@@ -239,12 +240,11 @@ function InstallNotice() {
   }, []);
   if (!visible) return null;
   const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  return <>{<div className="install-notice"><div className="notice-pulse"><MonitorSmartphone size={18} /></div><div><b>Coloque o CLEAN SENSI na tela inicial</b><span>Abra como um app no seu telefone.</span></div><button onClick={async () => { if (installEvent) { await installEvent.prompt(); setVisible(false); } else if (isIos) setIosGuide(true); else if (navigator.share) { await navigator.share({ title: "CLEAN SENSI", text: "Abrir o CLEAN SENSI", url: window.location.href }); setVisible(false); } else toast.info("Toque no menu Compartilhar do navegador e escolha 'Adicionar à tela inicial'."); }} aria-label="Adicionar à tela inicial"><ChevronRight size={18} /></button><button className="notice-close" onClick={() => setVisible(false)} aria-label="Fechar aviso"><X size={15} /></button></div>}{iosGuide && <div className="ios-install-guide" role="dialog" aria-modal="true"><div className="ios-guide-card"><div className="ios-guide-icon"><Share2 size={22} /></div><span className="eyebrow"><span className="eyebrow-dot" /> SAFARI / IPHONE</span><h2>Adicionar à Tela de Início</h2><p>Toque no ícone <b>Compartilhar</b> na barra inferior do Safari, como na imagem, e depois escolha <b>Adicionar à Tela de Início</b>.</p><div className="ios-share-hint"><Share2 size={25} /><span>Ícone Compartilhar</span><ChevronRight size={16} /><span>Adicionar à Tela de Início</span></div><button className="primary-button" onClick={() => setIosGuide(false)}>Entendi</button></div></div>}</>;
+  return <>{<div className="install-notice"><div className="notice-pulse"><MonitorSmartphone size={18} /></div><div><b>Coloque o ARTUR CHEATS na tela inicial</b><span>Abra como um app no seu telefone.</span></div><button onClick={async () => { if (installEvent) { await installEvent.prompt(); setVisible(false); } else if (isIos) setIosGuide(true); else if (navigator.share) { await navigator.share({ title: "ARTUR CHEATS", text: "Abrir o ARTUR CHEATS", url: window.location.href }); setVisible(false); } else toast.info("Toque no menu Compartilhar do navegador e escolha 'Adicionar à tela inicial'."); }} aria-label="Adicionar à tela inicial"><ChevronRight size={18} /></button><button className="notice-close" onClick={() => setVisible(false)} aria-label="Fechar aviso"><X size={15} /></button></div>}{iosGuide && <div className="ios-install-guide" role="dialog" aria-modal="true"><div className="ios-guide-card"><div className="ios-guide-icon"><Share2 size={22} /></div><span className="eyebrow"><span className="eyebrow-dot" /> SAFARI / IPHONE</span><h2>Adicionar à Tela de Início</h2><p>Toque no ícone <b>Compartilhar</b> na barra inferior do Safari, como na imagem, e depois escolha <b>Adicionar à Tela de Início</b>.</p><div className="ios-share-hint"><Share2 size={25} /><span>Ícone Compartilhar</span><ChevronRight size={16} /><span>Adicionar à Tela de Início</span></div><button className="primary-button" onClick={() => setIosGuide(false)}>Entendi</button></div></div>}</>;
 }
 
 function UserShell({ children, view, onChangeView, session, onLogout }: { children: React.ReactNode; view: View; onChangeView: (view: View) => void; session: { username: string; planId: string; expiresAt: Date | string; deviceId?: string | null }; onLogout: () => void }) {
   const nav: { id: View; label: string; icon: React.ElementType }[] = [
-    { id: "home", label: "Gerar Sensi", icon: Gauge },
     { id: "auxilio", label: "Auxílio", icon: SlidersHorizontal },
     { id: "info", label: "Sobre", icon: CircleHelp },
     { id: "profile", label: "Conta", icon: UserRound },
@@ -278,7 +278,7 @@ function GeneratorPage({ session }: { session: { username: string; planId: strin
   const devices = operatingSystem === "android" ? androidDevices : iosDevices;
   useEffect(() => setDevice(devices[0]), [operatingSystem]);
   const isFavorited = false;
-  return <div className="page-view"><div className="topbar"><div><span className="topbar-kicker">PAINEL DE CONTROLE</span><h2>Olá, {session.username}<span className="wave">✦</span></h2></div><div className="topbar-actions"><div className="license-pill"><span className="online-dot" /> LICENÇA ATIVA <b>{formatExpiry(session.expiresAt)}</b></div><button className="icon-button" onClick={() => toast.info("Tudo sincronizado")} aria-label="Sincronizar"><RefreshCw size={17} /></button></div></div><section className="hero-panel"><div className="hero-copy"><img className="hero-brand-logo" src="/clean-sensi-logo.png" alt="Logo CLEAN SENSI" /><p>Ajuste os parâmetros abaixo e gere uma configuração pensada para o seu dispositivo.</p><div className="hero-meta"><span><BadgeCheck size={15} /> Configuração personalizada</span><span><Zap size={15} /> Resultado instantâneo</span></div></div><div className="hero-crosshair"><div className="crosshair-ring ring-one" /><div className="crosshair-ring ring-two" /><div className="crosshair-center"><Crosshair size={46} /></div><span className="cross-label label-top">PRECISÃO</span><span className="cross-label label-side">RBX / 01</span></div></section><div className="section-intro"><div><span className="step-index">01 — 03</span><h2>Configure seu setup</h2></div><p>Escolha o sistema, o aparelho e o nível de performance.</p></div><section className="config-grid"><div className="config-card"><div className="config-card-header"><div><span className="card-step">01</span><h3>Sistema operacional</h3></div><span className="config-status"><Check size={12} /> PRONTO</span></div><div className="os-options">{OPERATING_SYSTEMS.map(os => <button key={os} className={`os-option ${operatingSystem === os ? "selected" : ""}`} onClick={() => setOperatingSystem(os)}>{os === "android" ? <Smartphone size={28} /> : <Apple size={28} />}<span>{OS_LABELS[os]}</span>{operatingSystem === os && <b><Check size={13} /></b>}</button>)}</div></div><div className="config-card device-card"><div className="config-card-header"><div><span className="card-step">02</span><h3>Seu aparelho</h3></div><Search size={17} className="muted-icon" /></div><label className="select-shell"><Smartphone size={17} /><select value={device} onChange={event => setDevice(event.target.value)}>{devices.map(item => <option key={item}>{item}</option>)}</select><ChevronRight size={16} /></label><div className="device-detected"><span className="device-signal"><span /><span /><span /></span><span>Dispositivo detectado</span><b>HWID OK</b></div></div><div className="config-card performance-card"><div className="config-card-header"><div><span className="card-step">03</span><h3>Nível de performance</h3></div><Gauge size={17} className="muted-icon" /></div><div className="performance-options">{PERFORMANCE_LEVELS.map(level => <button key={level} className={`performance-option ${performance === level ? "selected" : ""}`} onClick={() => setPerformance(level)}><span className="performance-bars"><i /><i /><i /></span><span><b>{PERFORMANCE_LABELS[level]}</b><small>{level === "low" ? "Economia" : level === "medium" ? "Balanceado" : "Máximo"}</small></span></button>)}</div></div></section><div className="generate-row"><span><LockKeyhole size={14} /> Os dados são processados com segurança.</span><button className="primary-button generate-button" onClick={() => generate.mutate({ operatingSystem, device, performance })} disabled={generate.isPending}>{generate.isPending ? <><RefreshCw size={17} className="spin" /> GERANDO...</> : <><Sparkles size={17} /> GERAR SENSIBILIDADE <ChevronRight size={18} /></>}</button></div>{result && <ResultCard values={result.values} historyId={result.historyId} isFavorited={isFavorited} onFavorite={() => result.historyId && favorite.mutate({ historyId: result.historyId })} />}</div>;
+  return <div className="page-view"><div className="topbar"><div><span className="topbar-kicker">PAINEL DE CONTROLE</span><h2>Olá, {session.username}<span className="wave">✦</span></h2></div><div className="topbar-actions"><div className="license-pill"><span className="online-dot" /> LICENÇA ATIVA <b>{formatExpiry(session.expiresAt)}</b></div><button className="icon-button" onClick={() => toast.info("Tudo sincronizado")} aria-label="Sincronizar"><RefreshCw size={17} /></button></div></div><section className="hero-panel"><div className="hero-copy"><img className="hero-brand-logo" src="/artur-cheats-banner.jpeg" alt="Logo ARTUR CHEATS" /><p>Ajuste os parâmetros abaixo e gere uma configuração pensada para o seu dispositivo.</p><div className="hero-meta"><span><BadgeCheck size={15} /> Configuração personalizada</span><span><Zap size={15} /> Resultado instantâneo</span></div></div><div className="hero-crosshair"><div className="crosshair-ring ring-one" /><div className="crosshair-ring ring-two" /><div className="crosshair-center"><Crosshair size={46} /></div><span className="cross-label label-top">PRECISÃO</span><span className="cross-label label-side">RBX / 01</span></div></section><div className="section-intro"><div><span className="step-index">01 — 03</span><h2>Configure seu setup</h2></div><p>Escolha o sistema, o aparelho e o nível de performance.</p></div><section className="config-grid"><div className="config-card"><div className="config-card-header"><div><span className="card-step">01</span><h3>Sistema operacional</h3></div><span className="config-status"><Check size={12} /> PRONTO</span></div><div className="os-options">{OPERATING_SYSTEMS.map(os => <button key={os} className={`os-option ${operatingSystem === os ? "selected" : ""}`} onClick={() => setOperatingSystem(os)}>{os === "android" ? <Smartphone size={28} /> : <Apple size={28} />}<span>{OS_LABELS[os]}</span>{operatingSystem === os && <b><Check size={13} /></b>}</button>)}</div></div><div className="config-card device-card"><div className="config-card-header"><div><span className="card-step">02</span><h3>Seu aparelho</h3></div><Search size={17} className="muted-icon" /></div><label className="select-shell"><Smartphone size={17} /><select value={device} onChange={event => setDevice(event.target.value)}>{devices.map(item => <option key={item}>{item}</option>)}</select><ChevronRight size={16} /></label><div className="device-detected"><span className="device-signal"><span /><span /><span /></span><span>Dispositivo detectado</span><b>HWID OK</b></div></div><div className="config-card performance-card"><div className="config-card-header"><div><span className="card-step">03</span><h3>Nível de performance</h3></div><Gauge size={17} className="muted-icon" /></div><div className="performance-options">{PERFORMANCE_LEVELS.map(level => <button key={level} className={`performance-option ${performance === level ? "selected" : ""}`} onClick={() => setPerformance(level)}><span className="performance-bars"><i /><i /><i /></span><span><b>{PERFORMANCE_LABELS[level]}</b><small>{level === "low" ? "Economia" : level === "medium" ? "Balanceado" : "Máximo"}</small></span></button>)}</div></div></section><div className="generate-row"><span><LockKeyhole size={14} /> Os dados são processados com segurança.</span><button className="primary-button generate-button" onClick={() => generate.mutate({ operatingSystem, device, performance })} disabled={generate.isPending}>{generate.isPending ? <><RefreshCw size={17} className="spin" /> GERANDO...</> : <><Sparkles size={17} /> GERAR SENSIBILIDADE <ChevronRight size={18} /></>}</button></div>{result && <ResultCard values={result.values} historyId={result.historyId} isFavorited={isFavorited} onFavorite={() => result.historyId && favorite.mutate({ historyId: result.historyId })} />}</div>;
 }
 
 function ResultCard({ values, historyId, isFavorited, onFavorite }: { values: SensitivityValues; historyId: number; isFavorited: boolean; onFavorite: () => void }) {
@@ -370,8 +370,8 @@ function AuxilioPage() {
     {quickExit && <div className="yx-bypass-overlay" role="status" aria-live="polite"><div className="yx-bypass-mark"><LogOut size={22} /></div><b>Saída rápida</b><span>Sessão encerrada neste site.</span></div>}
     <section className="yx-aux-window yx-aux-console">
       <header className="yx-aux-heading">
-        <div className="yx-aux-heading-copy"><span>AUXILIO / DE MIRA</span><h1>CLEAN SENSI</h1><p>Ajuste por módulos, sem sair do painel.</p></div>
-        <div className="yx-aux-heading-side"><span className="yx-aux-status"><i /> ONLINE</span><span className="yx-aux-mode-count"><b>00</b><small>CLEAN SENSI</small></span></div>
+        <div className="yx-aux-heading-copy"><span>AUXILIO / DE MIRA</span><h1>ARTUR CHEATS</h1><p>Ajuste por módulos, sem sair do painel.</p></div>
+        <div className="yx-aux-heading-side"><span className="yx-aux-status"><i /> ONLINE</span><span className="yx-aux-mode-count"><b>00</b><small>ARTUR CHEATS</small></span></div>
       </header>
       <nav className="yx-aux-tabs" aria-label="Seções do auxílio">
         {tabs.map(item => <button key={item.id} className={tab === item.id ? "active" : ""} onClick={() => setTab(item.id)}>{item.icon && <item.icon size={17} />}<span>{item.label}</span></button>)}
@@ -399,7 +399,7 @@ function AuxilioPage() {
         <button type="button" className="aux-module" onClick={quickExitNow}><span className="termux-code-icon" aria-hidden="true"><LogOut size={22} /></span><span><b>Bypass</b><small>Saída rápida</small></span><i><ChevronRight size={15} /></i></button>
       </div>}
       {tab === "injection" && <div className="aux-injection yx-injection"><div className="aux-action-row"><button onClick={() => openGame("normal")} disabled={Boolean(launching)}>{launching === "normal" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF NORMAL"}</button><button onClick={() => openGame("max")} disabled={Boolean(launching)}>{launching === "max" ? <><RefreshCw className="spin" size={16} /> ABRINDO...</> : "ABRIR FF MAX"}</button></div><div className={`aux-injection-state ${launching ? "active" : ""}`}>{launching ? <><RefreshCw className="spin" size={16} /> Solicitando abertura do Free Fire {launching === "max" ? "MAX" : "Normal"}...</> : "Normal e MAX são apps separados: cada botão abre sua versão. Se ela não estiver instalada, será aberta a página dessa versão na loja."}</div><div className="aux-console">{logs.map((log, index) => <div key={`${log}-${index}`} className={log.includes("SUCESSO") ? "success" : ""}><span>[{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}]</span> {log}</div>)}</div></div>}
-      <footer className="aux-footer">CLEAN SENSI <b> / PERFIL DE MIRA</b></footer>
+      <footer className="aux-footer">ARTUR CHEATS <b> / PERFIL DE MIRA</b></footer>
     </section>
   </div>;
 }
@@ -418,16 +418,16 @@ function EmptyState({ favoritesOnly }: { favoritesOnly: boolean }) { return <div
 
 function InfoPage() {
   return <div className="page-view">
-    <PageHeading kicker="CLEAN SENSI" title="FEITO PARA OS FORTES." description="Precisão é detalhe. Controle é consistência." />
+    <PageHeading kicker="ARTUR CHEATS" title="FEITO PARA OS FORTES." description="Precisão é detalhe. Controle é consistência." />
     <div className="about-layout">
-      <section className="about-eye-banner" aria-label="Logo CLEAN SENSI">
-        <img className="about-brand-logo" src="/clean-sensi-logo.png" alt="Logo CLEAN SENSI" />
+      <section className="about-eye-banner" aria-label="Logo ARTUR CHEATS">
+        <img className="about-brand-logo" src="/artur-cheats-banner.jpeg" alt="Logo ARTUR CHEATS" />
       </section>
       <section className="contact-panel">
         <span className="card-step">PRECISA DE AJUDA?</span>
         <h3>Fale com a comunidade.</h3>
         <p>Entre no nosso Discord para receber suporte e acompanhar novidades.</p>
-        <a className="contact-button" href="https://discord.gg/EDBtEVWpTM" target="_blank" rel="noreferrer"><span className="contact-letter">D</span><span><b>Entrar no Discord</b><small>Comunidade · suporte</small></span><ChevronRight size={17} /></a>
+        <a className="contact-button" href="https://discord.gg/TYSCkr9y3j" target="_blank" rel="noreferrer"><span className="contact-letter">D</span><span><b>Entrar no Discord</b><small>Comunidade · suporte</small></span><ChevronRight size={17} /></a>
       </section>
     </div>
     <div className="quote-strip"><span>“</span><p>Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá.</p><span>JOÃO 14:27</span></div>
@@ -447,7 +447,7 @@ function UserApp({ session, onLogout }: { session: { username: string; planId: s
 function AdminShell({ children, view, onChangeView, onLogout }: { children: React.ReactNode; view: AdminView; onChangeView: (view: AdminView) => void; onLogout: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const go = (next: AdminView) => { onChangeView(next); setMenuOpen(false); };
-  return <div className="admin-shell"><button className="admin-menu-button" onClick={() => setMenuOpen(value => !value)} aria-label="Abrir menu"><Menu size={20} /></button>{menuOpen && <div className="admin-menu-popover"><b>CLEADMIN00 ADMIN</b><button onClick={() => go("overview")}><Settings2 size={16} /> Config</button><button onClick={() => go("licenses")}><PackagePlus size={16} /> Gerenciar</button><button onClick={() => go("licenses")}><KeyRound size={16} /> Chaves</button></div>}<aside className="admin-sidebar"><div className="admin-logo"><AppLogo /><span className="admin-badge">ADMIN</span></div><div className="admin-nav"><span className="sidebar-section-label">CONTROLE</span><button className={view === "overview" ? "active" : ""} onClick={() => go("overview")}><LayoutDashboard size={18} /> Config</button><button className={view === "licenses" ? "active" : ""} onClick={() => go("licenses")}><KeyRound size={18} /> Chaves</button></div><div className="admin-sidebar-footer"><div className="admin-identity"><div className="admin-avatar"><Crown size={16} /></div><div><b>CLEADMIN00</b><span>Administrador</span></div></div><button className="sidebar-logout" onClick={onLogout}><LogOut size={16} /> Sair</button></div></aside><main className="admin-main"><header className="admin-topbar"><div className="admin-mobile-logo"><AppLogo compact /></div><div><span className="topbar-kicker">CONTROL CENTER</span><h2>Olá, CLEADMIN00 <Crown size={18} /></h2></div><div className="admin-top-actions"><span className="admin-online"><span className="online-dot" /> SISTEMA ONLINE</span><button className="icon-button" onClick={() => toast.info("Painel atualizado")}><RefreshCw size={17} /></button><button className="admin-mobile-exit" onClick={onLogout}><LogOut size={16} /></button></div></header>{children}</main></div>;
+  return <div className="admin-shell"><button className="admin-menu-button" onClick={() => setMenuOpen(value => !value)} aria-label="Abrir menu"><Menu size={20} /></button>{menuOpen && <div className="admin-menu-popover"><b>ARTURADMIN00 ADMIN</b><button onClick={() => go("overview")}><Settings2 size={16} /> Config</button><button onClick={() => go("licenses")}><PackagePlus size={16} /> Gerenciar</button><button onClick={() => go("licenses")}><KeyRound size={16} /> Chaves</button></div>}<aside className="admin-sidebar"><div className="admin-logo"><AppLogo /><span className="admin-badge">ADMIN</span></div><div className="admin-nav"><span className="sidebar-section-label">CONTROLE</span><button className={view === "overview" ? "active" : ""} onClick={() => go("overview")}><LayoutDashboard size={18} /> Config</button><button className={view === "licenses" ? "active" : ""} onClick={() => go("licenses")}><KeyRound size={18} /> Chaves</button></div><div className="admin-sidebar-footer"><div className="admin-identity"><div className="admin-avatar"><Crown size={16} /></div><div><b>ARTURADMIN00</b><span>Administrador</span></div></div><button className="sidebar-logout" onClick={onLogout}><LogOut size={16} /> Sair</button></div></aside><main className="admin-main"><header className="admin-topbar"><div className="admin-mobile-logo"><AppLogo compact /></div><div><span className="topbar-kicker">CONTROL CENTER</span><h2>Olá, ARTURADMIN00 <Crown size={18} /></h2></div><div className="admin-top-actions"><span className="admin-online"><span className="online-dot" /> SISTEMA ONLINE</span><button className="icon-button" onClick={() => toast.info("Painel atualizado")}><RefreshCw size={17} /></button><button className="admin-mobile-exit" onClick={onLogout}><LogOut size={16} /></button></div></header>{children}</main></div>;
 }
 
 function AdminOverview({ onGoLicenses }: { onGoLicenses: () => void }) {

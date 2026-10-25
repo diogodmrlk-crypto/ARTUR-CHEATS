@@ -61,7 +61,7 @@ describe("Vercel admin login", () => {
   it("does not notify Discord when the admin key is correct", async () => {
     const res = await invoke("auth.adminLogin", { adminKey: "correct-admin-key" });
     expect(res.statusCode).toBe(200);
-    expect(responseData(res).username).toBe("CLEADMIN00");
+    expect(responseData(res).username).toBe("ARTURADMIN00");
     expect(vi.mocked(globalThis.fetch)).not.toHaveBeenCalled();
   });
 
@@ -118,7 +118,7 @@ describe("Vercel admin login", () => {
 
   it("rejects a monthly key after its 30-day expiry even if its stored status is active", async () => {
     const now = Math.floor(Date.now() / 1000);
-    const row = { id: "monthly-expired-1", key: "CLEAN-SENSI-monthly-expired", username: "monthly_user", used: true, device: "device-monthly-1234", expire: 30, type: "monthly", createdAt: now - 31 * 24 * 60 * 60, activatedAt: now - 30 * 24 * 60 * 60 - 1, expiresAt: now - 1, status: "active" };
+    const row = { id: "monthly-expired-1", key: "ARTUR-monthly-expired", username: "monthly_user", used: true, device: "device-monthly-1234", expire: 30, type: "monthly", createdAt: now - 31 * 24 * 60 * 60, activatedAt: now - 30 * 24 * 60 * 60 - 1, expiresAt: now - 1, status: "active" };
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       if ((init?.method ?? "GET") === "GET") return new Response(JSON.stringify([row]), { status: 200, headers: { "content-type": "application/json" } });
       throw new Error("Uma key vencida não deve ser atualizada durante o login");

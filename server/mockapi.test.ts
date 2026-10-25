@@ -18,7 +18,7 @@ describe("MockAPI key expiration", () => {
   });
 
   it("maps the hourly type to a one-hour duration", () => {
-    const license = mockKeyToLicense({ key: "CLEAN-SENSI-hourly-test", used: false, device: "", expire: 1, type: "hourly", createdAt: 1_800_000_000, activatedAt: 0, expiresAt: 0 });
+    const license = mockKeyToLicense({ key: "ARTUR-hourly-test", used: false, device: "", expire: 1, type: "hourly", createdAt: 1_800_000_000, activatedAt: 0, expiresAt: 0 });
     expect(license.planId).toBe("hourly");
     expect(license.durationValue).toBe(1);
     expect(license.durationUnit).toBe("hours");
@@ -34,7 +34,7 @@ describe("MockAPI key expiration", () => {
       const key = await createMockKey({ username: "hour_test", planId: "hourly", durationValue: 1, durationUnit: "hours" });
       expect(key.type).toBe("hourly");
       expect(posted).toMatchObject({ username: "hour_test", type: "hourly", expire: 1, used: false, activatedAt: 0, expiresAt: 0, status: "active" });
-      expect(String(posted?.key)).toMatch(/^CLEAN-SENSI-hourly-/);
+      expect(String(posted?.key)).toMatch(/^ARTUR-hourly-/);
       expect(posted).not.toHaveProperty("durationUnit");
     } finally {
       fetch.mockRestore();
@@ -52,7 +52,7 @@ describe("MockAPI key expiration", () => {
       const key = await createMockKey({ username: "monthly_test", planId: "monthly", durationValue: 1, durationUnit: "months" });
       const license = mockKeyToLicense(key);
       expect(posted).toMatchObject({ username: "monthly_test", type: "monthly", expire: 30, used: false, activatedAt: 0, expiresAt: 0, status: "active" });
-      expect(String(posted?.key)).toMatch(/^CLEAN-SENSI-monthly-/);
+      expect(String(posted?.key)).toMatch(/^ARTUR-monthly-/);
       expect(license.planId).toBe("monthly");
       expect(license.durationValue).toBe(1);
       expect(license.durationUnit).toBe("months");
@@ -63,7 +63,7 @@ describe("MockAPI key expiration", () => {
 
 describe("MockAPI keys integration", () => {
   it("reads every collection page so bulk copy/reset can include all keys", async () => {
-    const makeRow = (id: number) => ({ id: String(id), key: `CLEAN-SENSI-test-${id}`, used: false, device: "", expire: 1, type: "daily", createdAt: id, activatedAt: 0, expiresAt: 0 });
+    const makeRow = (id: number) => ({ id: String(id), key: `ARTUR-test-${id}`, used: false, device: "", expire: 1, type: "daily", createdAt: id, activatedAt: 0, expiresAt: 0 });
     const firstPage = Array.from({ length: 100 }, (_, index) => makeRow(index + 1));
     const secondPage = [makeRow(101)];
     const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async input => {

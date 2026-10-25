@@ -17,7 +17,7 @@ export type MockKey = {
 };
 
 /** Coleção pública da MockAPI; sem credenciais adicionais. */
-export const MOCKAPI_KEYS_URL = process.env.MOCKAPI_KEYS_URL?.trim() || "https://6ac92b96fd7c536b1bda8e99.mockapi.io/licencas";
+export const MOCKAPI_KEYS_URL = process.env.MOCKAPI_KEYS_URL?.trim() || "https://6ade7e8b4e88f1bba4a527ee.mockapi.io/Arturapi";
 
 async function request<T>(path = "?sortBy=createdAt&order=desc", init?: RequestInit): Promise<T> {
   const response = await fetch(`${MOCKAPI_KEYS_URL}${path}`, {
@@ -93,7 +93,7 @@ export async function createMockKey(input: { username: string; planId: string; d
   const now = Math.floor(Date.now() / 1000);
   const type = input.planId === "hour" || input.planId === "hourly" ? "hourly" : input.planId === "week" ? "weekly" : input.planId === "month" || input.planId === "monthly" ? "monthly" : input.planId === "year" ? "yearly" : input.planId === "perm" ? "perm" : input.planId;
   const expire = storedExpiryForPlan(type, input.durationValue, input.durationUnit);
-  const value: MockKey = { key: `CLEAN-SENSI-${type}-${crypto.randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase()}`, username: input.username, used: false, device: "", expire, type, createdAt: now, activatedAt: 0, expiresAt: 0, status: "active", onlineAt: 0, history: [] };
+  const value: MockKey = { key: `ARTUR-${type}-${crypto.randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase()}`, username: input.username, used: false, device: "", expire, type, createdAt: now, activatedAt: 0, expiresAt: 0, status: "active", onlineAt: 0, history: [] };
   return fromRow(await request<any>("", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(toRow(value)) }));
 }
 

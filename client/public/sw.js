@@ -1,5 +1,5 @@
-const CACHE_NAME = "clean-sensi-shell-v6";
-const APP_SHELL = ["/", "/manifest.json", "/clean-sensi-logo.png", "/clean-sensi-icon-180.png", "/clean-sensi-icon-192.png", "/clean-sensi-icon-512.png", "/clean-sensi-icon-maskable-512.png"];
+const CACHE_NAME = "artur-cheats-shell-v6";
+const APP_SHELL = ["/", "/manifest.json", "/artur-cheats-banner.jpeg", "/artur-cheats-icon-180.png", "/artur-cheats-icon-192.png", "/artur-cheats-icon-512.png", "/artur-cheats-icon-maskable-512.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
